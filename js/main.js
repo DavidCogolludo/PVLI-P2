@@ -39,13 +39,35 @@ battle.on('turn', function (data) {
     console.log('TURN', data);
 
     // TODO: render the characters
+    var list = Object.keys(this._charactersById);
+    console.log(data);
+    var hChara = document.getElementById('listaHeroe');
+    var mChara = document.getElementById('listaMonster');
+    var render;
+    var temp;
+    for (var i = 0; i < list.length; i++){
+        temp = this._charactersById[list[i]];
+        //HAY UN ESPACIO!!!!!!!!!!!!!!!!!!!!
+        render = '<li data-chara- id="'+list[i]+'">'+temp.name+'(HP: <strong>'+temp.hp+'</strong>/'+temp.maxHp+', MP: <strong>'+temp.mp+'</strong>/'+temp.maxMp+') </li>';
+       if (temp.party === 'heroes'){
+         hChara.innerHTML += render;
+       }
+       else {
+        mChara.innerHTML += render;
+       }
+    }
     // TODO: highlight current character
+    var active = document.querySelector('#'+ data.activeCharacterId);
+    active.classList.add("active");
+    //var htmlbase = document.getElementByID(active);
+
+    //var active = document.getElementById('Tank');
+    console.log(active);
     // TODO: show battle actions form
 });
 
 battle.on('info', function (data) {
-    console.log('INFO', data);
-
+ console.log('INFO', data);
     // TODO: display turn info in the #battle-info panel
 });
 
