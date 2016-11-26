@@ -40,15 +40,14 @@ battle.on('turn', function (data) {
 
     // TODO: render the characters
     var list = Object.keys(this._charactersById);
-    console.log(data);
-    var hChara = document.getElementById('listaHeroe');
-    var mChara = document.getElementById('listaMonster');
+    var listChara = document.querySelectorAll('.character-list');
+    var hChara = listChara[0];
+    var mChara = listChara [1];
     var render;
     var temp;
     for (var i = 0; i < list.length; i++){
         temp = this._charactersById[list[i]];
-        //HAY UN ESPACIO!!!!!!!!!!!!!!!!!!!!
-        render = '<li data-chara- id="'+list[i]+'">'+temp.name+'(HP: <strong>'+temp.hp+'</strong>/'+temp.maxHp+', MP: <strong>'+temp.mp+'</strong>/'+temp.maxMp+') </li>';
+        render = '<li data-chara-id="'+list[i]+'">'+temp.name+'(HP: <strong>'+temp.hp+'</strong>/'+temp.maxHp+', MP: <strong>'+temp.mp+'</strong>/'+temp.maxMp+') </li>';
        if (temp.party === 'heroes'){
          hChara.innerHTML += render;
        }
@@ -57,14 +56,28 @@ battle.on('turn', function (data) {
        }
     }
     // TODO: highlight current character
-    var active = document.querySelector('#'+ data.activeCharacterId);
+    var active = document.querySelector('[data-chara-id="'+data.activeCharacterId+'"]');
     active.classList.add("active");
-    //var htmlbase = document.getElementByID(active);
 
-    //var active = document.getElementById('Tank');
-    console.log(active);
     // TODO: show battle actions form
+    actionForm.style.display='inline';
+    var choices = getChild(actionForm, 'choices');
+    for (var obj in this.options.current._group){
+      var renderCh =  '<li><label><input type="radio" name="option" value="'+obj+'"> '+obj+'</label></li>';
+      choices.innerHTML += renderCh;
+    }
 });
+function getChild (obj, className){
+    var found = false;
+    var i = 0;
+    while (i < obj.childNodes.length && !found){
+    var choices = obj.firstChild;
+    if (choices.className && choices.className == className)found = true;
+    else choices = choices.nextSibling;
+    i++;
+    }
+    return choices;
+}
 
 battle.on('info', function (data) {
  console.log('INFO', data);
@@ -86,7 +99,10 @@ window.onload = function () {
 
     actionForm.addEventListener('submit', function (evt) {
         evt.preventDefault();
-
+        var choice = (actionForm.elements['options']).value;
+        console.log(choice);
+        battle.options.select(choice);
+       // <input type="radio" name="option" value="attack" required>
         // TODO: select the action chosen by the player
         // TODO: hide this menu
         // TODO: go to either select target menu, or to the select spell menu
