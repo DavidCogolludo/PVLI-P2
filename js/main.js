@@ -45,9 +45,12 @@ battle.on('turn', function (data) {
     var mChara = listChara [1];
     var render;
     var temp;
+    hChara.innerHTML = '';
+    mChara.innerHTML = '';
     for (var i = 0; i < list.length; i++){
         temp = this._charactersById[list[i]];
-        render = '<li data-chara-id="'+list[i]+'">'+temp.name+'(HP: <strong>'+temp.hp+'</strong>/'+temp.maxHp+', MP: <strong>'+temp.mp+'</strong>/'+temp.maxMp+') </li>';
+        if (temp.hp < 1) render = '<li data-chara-id="'+list[i]+'" class = "dead">'+temp.name+'(HP: <strong>'+temp.hp+'</strong>/'+temp.maxHp+', MP: <strong>'+temp.mp+'</strong>/'+temp.maxMp+') </li>';
+        else render = '<li data-chara-id="'+list[i]+'">'+temp.name+'(HP: <strong>'+temp.hp+'</strong>/'+temp.maxHp+', MP: <strong>'+temp.mp+'</strong>/'+temp.maxMp+') </li>';
        if (temp.party === 'heroes'){
          hChara.innerHTML += render;
        }
@@ -60,18 +63,42 @@ battle.on('turn', function (data) {
     active.classList.add("active");
 
     // TODO: show battle actions form
-    actionForm.style.display='inline';
-    var choices = getChild(actionForm, 'choices');
-    for (var obj in this.options.current._group){
-      var renderCh =  '<li><label><input type="radio" name="option" value="'+obj+'"> '+obj+'</label></li>';
+    writeForm(actionForm);
+});
+
+function writeForm (form){
+    form.style.display='block';
+    var choices = getChild(form, 'choices');
+    choices.innerHTML='';
+    var renderCh = null;
+    var color = "black";
+    for (var obj in battle.options.current._group){
+        if (form === targetForm){
+            if (battle._charactersById[obj].party === "monsters") color = "green";
+            else color = "red";
+        }
+      renderCh =  '<li><label><font color = '+color+'><input type="radio" name="option" value="'+obj+'" required> '+obj+'</font></label></li>';
       choices.innerHTML += renderCh;
     }
-});
+    var found = false;
+    var i = 0;
+    var button;
+
+    while (i < form.childNodes.length && !found){
+        if(form.childNodes[i].hasChildNodes() && form.childNodes[i].firstChild.getAttribute("type") === "submit"){
+         found = true;
+         button = form.childNodes[i].firstChild;
+        }
+        i++;
+    }
+    if (renderCh === null) button.disabled = true;
+    else button.disabled = false;
+}
 function getChild (obj, className){
     var found = false;
     var i = 0;
-    while (i < obj.childNodes.length && !found){
     var choices = obj.firstChild;
+    while (i < obj.childNodes.length && !found){
     if (choices.className && choices.className == className)found = true;
     else choices = choices.nextSibling;
     i++;
@@ -82,13 +109,51 @@ function getChild (obj, className){
 battle.on('info', function (data) {
  console.log('INFO', data);
     // TODO: display turn info in the #battle-info panel
+    var render;
+    var effectsTxt = prettifyEffect(data.effect || {});
+    var name = this._charactersById[data.activeCharacterId].name;
+    var targetName = this._charactersById[data.targetId].name;
+    switch (data.action){
+        case 'attack': 
+            if (data.success)render = '<strong>'+name +'</strong> attacked <strong>'+ targetName+ '</strong> and caused '+effectsTxt;
+            else render = '<strong>'+name+'</strong> missed the attack ';
+            break;
+        case 'defend':
+            render = '<strong>'+ name+'</strong> defense raises to '+ data.newDefense;
+            break;
+        case 'cast':
+            if(data.success) render = '<strong>'+name+'</strong> casted <i>'+ data.scrollName + '</i> on <strong>'+ targetName+ '</strong> and caused '+effectsTxt;
+            else render = '<strong>'+name+'</strong> failed the cast ';
+            break;
+    }
+    document.getElementById("battle-info").innerHTML = render;
 });
 
 battle.on('end', function (data) {
     console.log('END', data);
-
     // TODO: re-render the parties so the death of the last character gets reflected
+    var list = Object.keys(this._charactersById);
+    var listChara = document.querySelectorAll('.character-list');
+    var hChara = listChara[0];
+    var mChara = listChara [1];
+    var render;
+    var temp;
+    hChara.innerHTML = '';
+    mChara.innerHTML = '';
+    for (var i = 0; i < list.length; i++){
+        temp = this._charactersById[list[i]];
+        if (temp.hp < 1) render = '<li data-chara-id="'+list[i]+'" class = "dead">'+temp.name+'(HP: <strong>'+temp.hp+'</strong>/'+temp.maxHp+', MP: <strong>'+temp.mp+'</strong>/'+temp.maxMp+') </li>';
+        else render = '<li data-chara-id="'+list[i]+'">'+temp.name+'(HP: <strong>'+temp.hp+'</strong>/'+temp.maxHp+', MP: <strong>'+temp.mp+'</strong>/'+temp.maxMp+') </li>';
+       if (temp.party === 'heroes'){
+         hChara.innerHTML += render;
+       }
+       else {
+        mChara.innerHTML += render;
+       }
+    }
     // TODO: display 'end of battle' message, showing who won
+    document.getElementById("battle-info").innerHTML = 'Battle is over! Winners were: <strong>'+data.winner+'</strong>';
+    document.querySelector('form[name=end]').style.display = "inline";
 });
 
 window.onload = function () {
@@ -99,42 +164,61 @@ window.onload = function () {
 
     actionForm.addEventListener('submit', function (evt) {
         evt.preventDefault();
-        var choice = (actionForm.elements['options']).value;
-        console.log(choice);
+         // TODO: select the action chosen by the player
+        var choice = actionForm.elements['option'].value;
         battle.options.select(choice);
-       // <input type="radio" name="option" value="attack" required>
-        // TODO: select the action chosen by the player
         // TODO: hide this menu
+        actionForm.style.display='none';
         // TODO: go to either select target menu, or to the select spell menu
+        var aux;
+        if (choice !== 'defend'){
+
+        choice === 'attack' ? aux = targetForm : aux = spellForm;
+         writeForm(aux);
+        }
     });
 
     targetForm.addEventListener('submit', function (evt) {
         evt.preventDefault();
         // TODO: select the target chosen by the player
+        var choice = targetForm.elements['option'].value;
+        battle.options.select(choice);
         // TODO: hide this menu
+         targetForm.style.display='none';
     });
 
     targetForm.querySelector('.cancel')
     .addEventListener('click', function (evt) {
         evt.preventDefault();
         // TODO: cancel current battle options
+        battle.options.cancel();
         // TODO: hide this form
+        targetForm.style.display='none';
         // TODO: go to select action menu
+        writeForm(actionForm);
     });
 
     spellForm.addEventListener('submit', function (evt) {
         evt.preventDefault();
         // TODO: select the spell chosen by the player
+         var choice = spellForm.elements['option'].value;
+         battle.options.select(choice);
         // TODO: hide this menu
+         spellForm.style.display='none';
         // TODO: go to select target menu
+        writeForm(targetForm);
     });
 
     spellForm.querySelector('.cancel')
     .addEventListener('click', function (evt) {
         evt.preventDefault();
         // TODO: cancel current battle options
+        battle.options.cancel();
         // TODO: hide this form
+        targetForm.style.display='none';
+        spellForm.style.display='none';
         // TODO: go to select action menu
+        writeForm(actionForm);
     });
 
     battle.start();
