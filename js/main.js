@@ -9,24 +9,47 @@ function prettifyEffect(obj) {
     }).join(', ');
 }
 
-
+function getRandomParty(party){
+    var rnd= Math.floor(Math.random() *(5 - 1) + 1);
+    var rnd2;
+    var array = [];
+    if (party === 'heroes'){
+      for (var i= 0; i<rnd; i++) {
+        rnd2 = Math.floor(Math.random() *(3 - 1) + 1);
+         rnd2 === 1 ? array[i] = RPG.entities.characters.heroTank : array[i] = RPG.entities.characters.heroWizard;
+      }
+    }
+    else {
+        for (var i= 0; i<rnd; i++) {
+         rnd2 = Math.floor(Math.random() *(4 - 1) + 1);
+         switch (rnd2){
+            case 1:
+              array[i] = RPG.entities.characters.monsterSlime;
+              break;
+            case 2:
+               array[i] = RPG.entities.characters.monsterBat;
+               break;
+            case 3: 
+               array[i] = RPG.entities.characters.monsterSkeleton;
+               break;
+            }
+        }
+    }
+    return array;
+}
 battle.setup({
     heroes: {
-        members: [
-            RPG.entities.characters.heroTank,
-            RPG.entities.characters.heroWizard
-        ],
+        members: getRandomParty('heroes'),
         grimoire: [
             RPG.entities.scrolls.health,
             RPG.entities.scrolls.fireball
         ]
     },
     monsters: {
-        members: [
-            RPG.entities.characters.monsterSlime,
-            RPG.entities.characters.monsterBat,
-            RPG.entities.characters.monsterSkeleton,
-            RPG.entities.characters.monsterBat
+        members: getRandomParty('monsters'),
+        grimoire: [
+            RPG.entities.scrolls.health,
+            RPG.entities.scrolls.fireball
         ]
     }
 });
@@ -37,7 +60,7 @@ battle.on('start', function (data) {
 
 battle.on('turn', function (data) {
     console.log('TURN', data);
-
+     
     // TODO: render the characters
     var list = Object.keys(this._charactersById);
     var listChara = document.querySelectorAll('.character-list');
@@ -83,7 +106,7 @@ function writeForm (form){
     var found = false;
     var i = 0;
     var button;
-
+    //Encuentra el botón del formulario
     while (i < form.childNodes.length && !found){
         if(form.childNodes[i].hasChildNodes() && form.childNodes[i].firstChild.getAttribute("type") === "submit"){
          found = true;
@@ -91,6 +114,7 @@ function writeForm (form){
         }
         i++;
     }
+
     if (renderCh === null) button.disabled = true;
     else button.disabled = false;
 }
