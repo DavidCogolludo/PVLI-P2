@@ -22,17 +22,8 @@ function getRandomParty(party){
     else {
         for (var i= 0; i<rnd; i++) {
          rnd2 = Math.floor(Math.random() *(4 - 1) + 1);
-         switch (rnd2){
-            case 1:
-              array[i] = RPG.entities.characters.monsterSlime;
-              break;
-            case 2:
-               array[i] = RPG.entities.characters.monsterBat;
-               break;
-            case 3: 
-               array[i] = RPG.entities.characters.monsterSkeleton;
-               break;
-            }
+
+         rnd2 === 1 ? array[i] = RPG.entities.characters.monsterSlime : rnd2 === 2 ? array[i] = RPG.entities.characters.monsterBat : array[i]= RPG.entities.characters.monsterSkeleton;
         }
     }
     return array;
@@ -95,18 +86,26 @@ function writeForm (form){
     choices.innerHTML='';
     var renderCh = null;
     var color = "black";
+    var spellCost= '';
+
     for (var obj in battle.options.current._group){
+    	//Añade el color según la party si el formulario es target
         if (form === targetForm){
-            if (battle._charactersById[obj].party === "monsters") color = "green";
-            else color = "red";
+            if (battle._charactersById[obj].party === "monsters") color = "red";
+            else color = "green";
+        }//Añade el coste si el formulario es spell
+        else if (form === spellForm){
+        	spellCost = ' (<strong> cost: '+RPG.entities.scrolls[obj].cost+'</strong>)';
         }
-      renderCh =  '<li><label><font color = '+color+'><input type="radio" name="option" value="'+obj+'" required> '+obj+'</font></label></li>';
+
+      renderCh =  '<li><label><font color = '+color+'><input type="radio" name="option" value="'+obj+'" required> '+obj+spellCost+'</font></label></li>';
       choices.innerHTML += renderCh;
     }
+    //Encuentra el botón del formulario
     var found = false;
     var i = 0;
     var button;
-    //Encuentra el botón del formulario
+   
     while (i < form.childNodes.length && !found){
         if(form.childNodes[i].hasChildNodes() && form.childNodes[i].firstChild.getAttribute("type") === "submit"){
          found = true;
@@ -115,6 +114,7 @@ function writeForm (form){
         i++;
     }
 
+    //Desactiva el botón si no hay opciones en el formulario.
     if (renderCh === null) button.disabled = true;
     else button.disabled = false;
 }
